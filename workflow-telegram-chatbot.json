@@ -1,0 +1,400 @@
+{
+  "name": "Bot Clima BR",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "41261099-7e36-4907-8b8d-918d94cf3a3f",
+      "name": "Telegram Trigger",
+      "webhookId": "ab454cab-7105-4686-9f36-ac2ea6f322d2",
+      "credentials": {
+        "telegramApi": {
+          "id": "BW3nmD6W35a49xRH",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06140fa0-066f-4d48-818e-b9f8d252a7bc",
+              "name": "queue",
+              "value": "={{ $json.message.text.trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "9d449af4-7f12-4f57-827b-44be8ff60f40",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openweathermap.org/data/2.5/weather",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "lang",
+              "value": "pt-BR"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.queue }},BR"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0ff07162-ff3e-405c-bc08-a67bb6e49996",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "Qi8ZYJP046DUuf6q",
+          "name": "Query Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5952ea52-ffa4-4088-93a3-b3d116049595",
+              "leftValue": "={{ $json.error.status }}",
+              "rightValue": 404,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        96
+      ],
+      "id": "bbdf1257-8b8c-442e-844d-8ed766afb1be",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Não encontramos a cidade que você digitou ☹️ Use o formato Cidade,UF (ex.: São Paulo,SP).! 💪",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        80
+      ],
+      "id": "502c068a-e54d-422e-a10a-5a6fa3cf2c87",
+      "name": "Cidade não encontrada",
+      "webhookId": "73272f01-b08c-4c69-80d2-d9265cecabd4",
+      "credentials": {
+        "telegramApi": {
+          "id": "BW3nmD6W35a49xRH",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Um erro inesperado aconteceu! Contate nosso suporte ⚠️",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        272
+      ],
+      "id": "19cebaf1-e988-4d16-b909-b9d1120b3f05",
+      "name": "Erro inesperado",
+      "webhookId": "73272f01-b08c-4c69-80d2-d9265cecabd4",
+      "credentials": {
+        "telegramApi": {
+          "id": "BW3nmD6W35a49xRH",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=A temperatura atual em {{ $json.name }} é {{ $json.main.temp.toFixed(1) }} ˚C. {{ Math.abs($json.main.temp - $json.main.feels_like) > 5 ? `Mas a sensação térmica é de ${$json.main.feels_like.toFixed(1)} ˚C` : ''}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -128
+      ],
+      "id": "7357d764-3c1f-4fd4-9b1b-71b2340226de",
+      "name": "Temperatura da cidade",
+      "webhookId": "73272f01-b08c-4c69-80d2-d9265cecabd4",
+      "credentials": {
+        "telegramApi": {
+          "id": "BW3nmD6W35a49xRH",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6a58f44b-d803-4cda-9791-7c88f6ff5e95",
+              "leftValue": "={{ $json.message.from.is_bot }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "1e3b673f-8f02-49e4-bb17-f7a72801db44",
+      "name": "Ignore Bots response"
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 961394632,
+          "message": {
+            "message_id": 2,
+            "from": {
+              "id": 1156977767,
+              "is_bot": false,
+              "first_name": "Mateus",
+              "last_name": "Morais",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 1156977767,
+              "first_name": "Mateus",
+              "last_name": "Morais",
+              "type": "private"
+            },
+            "date": 1769715870,
+            "text": "São José dos Campos, SP"
+          }
+        }
+      }
+    ],
+    "HTTP Request": [
+      {
+        "json": {
+          "coord": {
+            "lon": -45.8869,
+            "lat": -23.1794
+          },
+          "weather": [
+            {
+              "id": 211,
+              "main": "Thunderstorm",
+              "description": "thunderstorm",
+              "icon": "11n"
+            },
+            {
+              "id": 500,
+              "main": "Rain",
+              "description": "light rain",
+              "icon": "10n"
+            }
+          ],
+          "base": "stations",
+          "main": {
+            "temp": 23.27,
+            "feels_like": 23.56,
+            "temp_min": 23.27,
+            "temp_max": 23.27,
+            "pressure": 1013,
+            "humidity": 73,
+            "sea_level": 1013,
+            "grnd_level": 943
+          },
+          "visibility": 8000,
+          "wind": {
+            "speed": 4.12,
+            "deg": 60
+          },
+          "rain": {
+            "1h": 0.24
+          },
+          "clouds": {
+            "all": 100
+          },
+          "dt": 1769727324,
+          "sys": {
+            "type": 1,
+            "id": 8434,
+            "country": "BR",
+            "sunrise": 1769676054,
+            "sunset": 1769723534
+          },
+          "timezone": -10800,
+          "id": 3448636,
+          "name": "São José dos Campos",
+          "cod": 200
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Ignore Bots response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Temperatura da cidade",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Cidade não encontrada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erro inesperado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ignore Bots response": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7ff38145-c79d-4080-aeb7-665867fe34a9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "597f36c270e2af244672ef85d49d18a1011c9bdf7314c8a9ee62aed045582ac2"
+  },
+  "id": "wAK6Cayy9dLPrziiTbrTz",
+  "tags": []
+}
